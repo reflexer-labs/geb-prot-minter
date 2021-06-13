@@ -48,28 +48,26 @@ contract ProtocolTokenMinterTest is DSTest {
     }
 
     function test_setup() public {
-      assertEq(minter.authorizedAccounts(address(this)), 1);
-      assertTrue(minter.mintReceiver() == address(0x1));
-      assertTrue(address(minter.protocolToken()) == address(protocolToken));
-      assertEq(minter.mintStartTime(), mintStartTime);
-      assertEq(minter.amountToMintPerWeek(), amountToMintPerWeek);
-      assertEq(minter.weeklyMintDecay(), weeklyMintDecay);
+        assertEq(minter.authorizedAccounts(address(this)), 1);
+        assertTrue(minter.mintReceiver() == address(0x1));
+        assertTrue(address(minter.protocolToken()) == address(protocolToken));
+        assertEq(minter.mintStartTime(), mintStartTime);
+        assertEq(minter.amountToMintPerWeek(), amountToMintPerWeek);
+        assertEq(minter.weeklyMintDecay(), weeklyMintDecay);
     }
-    /* function testFail_mint_before_start() public {
-      minter.mint();
+    function testFail_mint_before_start() public {
+        minter.mint();
     }
     function test_mint_first() public {
-      hevm.warp(now + 1 weeks + 1);
-      minter.mint();
+        hevm.warp(now + 1 weeks);
+        minter.mint();
 
-      assertEq(protocolToken.balanceOf(address(minter)), amountToMintPerWeek);
-      assertTrue(minter.amountToMintPerWeek() < amountToMintPerWeek);
-      assertEq(minter.amountToMintPerWeek(), amountToMintPerWeek * weeklyMintDecay / WAD);
-      assertEq(minter.lastWeeklyMint(), now);
-      assertEq(minter.lastTaggedWeek(), 1);
-    } */
-
-
+        assertEq(protocolToken.balanceOf(address(minter)), amountToMintPerWeek);
+        assertTrue(minter.amountToMintPerWeek() < amountToMintPerWeek);
+        assertEq(minter.amountToMintPerWeek(), amountToMintPerWeek * weeklyMintDecay / WAD);
+        assertEq(minter.lastWeeklyMint(), now);
+        assertEq(minter.lastTaggedWeek(), 1);
+    }
     /* function testFail_second_mint_before_week_passes() public {
 
     }

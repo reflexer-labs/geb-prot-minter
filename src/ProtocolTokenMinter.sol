@@ -63,7 +63,7 @@ contract ProtocolTokenMinter is GebMath {
     // --- Events ---
     event AddAuthorization(address account);
     event RemoveAuthorization(address account);
-    event AccrueToMint(uint256 weeklyAmount);
+    event Mint(uint256 weeklyAmount);
 
     constructor(
       address mintReceiver_,
@@ -112,7 +112,7 @@ contract ProtocolTokenMinter is GebMath {
 
       protocolToken.mint(address(this), weeklyAmount);
 
-      emit AccrueToMint(weeklyAmount);
+      emit Mint(weeklyAmount);
     }
 
     /*
