@@ -46,13 +46,11 @@ contract ProtocolTokenMinter is GebMath {
     uint256 public weeklyMintDecay;                                       // wad
     // Timestamp when minting starts
     uint256 public mintStartTime;
-    // Amount already minted
-    uint256 public alreadyMinted;                                         // wad
 
     uint256 public constant WEEK                     = 1 weeks;
     uint256 public constant WEEKS_IN_YEAR            = 52;
     uint256 public constant INITIAL_INFLATION_PERIOD = WEEKS_IN_YEAR * 3; // 3 years
-    uint256 public constant TERMINAL_INFLATION       = 1.08E18;           // 8%
+    uint256 public constant TERMINAL_INFLATION       = 1.08E18;           // 8% compounded weekly
 
     // Address that receives minted tokens
     address     public mintReceiver;
