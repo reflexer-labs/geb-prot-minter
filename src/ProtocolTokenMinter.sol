@@ -75,7 +75,7 @@ contract ProtocolTokenMinter is GebMath {
       require(mintReceiver_ != address(0), "ProtocolTokenMinter/null-mint-receiver");
       require(protocolToken_ != address(0), "ProtocolTokenMinter/null-prot-token");
 
-      require(mintStartTime_ > block.timestamp, "ProtocolTokenMinter/invalid-start-time");
+      require(mintStartTime_ > now, "ProtocolTokenMinter/invalid-start-time");
       require(amountToMintPerWeek_ > 0, "ProtocolTokenMinter/null-amount-to-mint");
       require(weeklyMintDecay_ < WAD, "ProtocolTokenMinter/invalid-mint-decay");
 
@@ -95,11 +95,11 @@ contract ProtocolTokenMinter is GebMath {
     * @notice Mint tokens for this contract
     */
     function mint() external {
-      require(block.timestamp > mintStartTime, "ProtocolTokenMinter/too-early");
-      require(addition(lastWeeklyMint, WEEK) <= block.timestamp, "ProtocolTokenMinter/week-not-elapsed");
+      require(now > mintStartTime, "ProtocolTokenMinter/too-early");
+      require(addition(lastWeeklyMint, WEEK) <= now, "ProtocolTokenMinter/week-not-elapsed");
 
       uint256 weeklyAmount;
-      lastWeeklyMint = (lastWeeklyMint == 0) ? block.timestamp : addition(lastWeeklyMint, WEEK);
+      lastWeeklyMint = (lastWeeklyMint == 0) ? now : addition(lastWeeklyMint, WEEK);
 
       if (lastTaggedWeek < INITIAL_INFLATION_PERIOD) {
         weeklyAmount        = amountToMintPerWeek;
