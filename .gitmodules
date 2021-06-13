@@ -1,3 +1,6 @@
 [submodule "lib/ds-test"]
 	path = lib/ds-test
 	url = https://github.com/dapphub/ds-test
+[submodule "lib/geb-protocol-token-authority"]
+	path = lib/geb-protocol-token-authority
+	url = https://github.com/reflexer-labs/geb-protocol-token-authority.git
