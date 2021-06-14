@@ -19,8 +19,8 @@ contract ProtocolTokenMinterTest is DSTest {
     ProtocolTokenAuthority authority;
 
     uint256 initialSupply       = 1000000E18;
-    uint256 amountToMintPerWeek = 9615E18;       // Annualized this is about 500K tokens
-    uint256 weeklyMintDecay     = 0.97E18;
+    uint256 amountToMintPerWeek = 10000E18;
+    uint256 weeklyMintDecay     = 0.995300000E18;
     uint256 mintStartTime;
 
     uint256 WAD = 1E18;
@@ -131,7 +131,7 @@ contract ProtocolTokenMinterTest is DSTest {
         uint256 totalMinted;
         hevm.warp(now + 1 weeks + 1);
 
-        for (uint i = 0; i < 52; i++) {
+        for (uint i = 0; i < minter.INITIAL_INFLATION_PERIOD(); i++) {
             minter.mint();
             hevm.warp(now + 1 weeks);
 
@@ -141,7 +141,9 @@ contract ProtocolTokenMinterTest is DSTest {
         assertTrue(protocolToken.balanceOf(address(minter)) > 0);
         assertEq(minter.amountToMintPerWeek(), amountToMintPerWeek);
         assertEq(minter.lastWeeklyMint(), now - 1 weeks);
-        assertEq(minter.lastTaggedWeek(), 52);
+        assertEq(minter.lastTaggedWeek(), minter.INITIAL_INFLATION_PERIOD());
+
+        assertEq(protocolToken.totalSupply(), 2107362181657426125711856);
     }
     function testFail_mint_full_initial_period_mint_terminal() public {
         uint256 totalMinted;

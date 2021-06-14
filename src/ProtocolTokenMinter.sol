@@ -50,7 +50,7 @@ contract ProtocolTokenMinter is GebMath {
     uint256 public constant WEEK                     = 1 weeks;
     uint256 public constant WEEKS_IN_YEAR            = 52;
     uint256 public constant INITIAL_INFLATION_PERIOD = WEEKS_IN_YEAR * 3; // 3 years
-    uint256 public constant TERMINAL_INFLATION       = 1.08E18;           // 8% compounded weekly
+    uint256 public constant TERMINAL_INFLATION       = 1.0625E18;         // 6.25% compounded weekly (6.44% annual)
 
     // Address that receives minted tokens
     address     public mintReceiver;
@@ -62,6 +62,7 @@ contract ProtocolTokenMinter is GebMath {
     event AddAuthorization(address account);
     event RemoveAuthorization(address account);
     event Mint(uint256 weeklyAmount);
+    event ModifyParameters(bytes32 parameter, address data);
 
     constructor(
       address mintReceiver_,
@@ -88,6 +89,20 @@ contract ProtocolTokenMinter is GebMath {
       emit AddAuthorization(msg.sender);
     }
 
+    // --- Administration ---
+    /*
+    * @notify Change the mintReceiver
+    * @param parameter The parameter name
+    * @param data The new address for the receiver
+    */
+    function modifyParameters(bytes32 parameter, address data) external isAuthorized {
+        if (parameter == "mintReceiver") {
+          mintReceiver = data;
+        }
+        else revert("ProtocolTokenMinter/modify-unrecognized-param");
+        emit ModifyParameters(parameter, data);
+    }
+
     // --- Core Logic ---
     /*
     * @notice Mint tokens for this contract
@@ -101,7 +116,7 @@ contract ProtocolTokenMinter is GebMath {
 
       if (lastTaggedWeek < INITIAL_INFLATION_PERIOD) {
         weeklyAmount        = amountToMintPerWeek;
-        amountToMintPerWeek = wmultiply(amountToMintPerWeek, weeklyMintDecay);
+        amountToMintPerWeek = multiply(amountToMintPerWeek, weeklyMintDecay) / WAD;
       } else {
         weeklyAmount = wdivide(protocolToken.totalSupply(), TERMINAL_INFLATION) / WEEKS_IN_YEAR;
       }
