@@ -46,11 +46,13 @@ contract ProtocolTokenMinter is GebMath {
     uint256 public weeklyMintDecay;                                       // wad
     // Timestamp when minting starts
     uint256 public mintStartTime;
+    // Whether minting is currently allowed
+    uint256 public mintAllowed = 1;
 
     uint256 public constant WEEK                     = 1 weeks;
     uint256 public constant WEEKS_IN_YEAR            = 52;
     uint256 public constant INITIAL_INFLATION_PERIOD = WEEKS_IN_YEAR * 3; // 3 years
-    uint256 public constant TERMINAL_INFLATION       = 1.0625E18;         // 6.25% compounded weekly (6.44% annual)
+    uint256 public constant TERMINAL_INFLATION       = 1.05E18;           // 5% compounded weekly
 
     // Address that receives minted tokens
     address     public mintReceiver;
@@ -63,6 +65,7 @@ contract ProtocolTokenMinter is GebMath {
     event RemoveAuthorization(address account);
     event Mint(uint256 weeklyAmount);
     event ModifyParameters(bytes32 parameter, address data);
+    event ModifyParameters(bytes32 parameter, uint256 data);
 
     constructor(
       address mintReceiver_,
@@ -102,6 +105,18 @@ contract ProtocolTokenMinter is GebMath {
         else revert("ProtocolTokenMinter/modify-unrecognized-param");
         emit ModifyParameters(parameter, data);
     }
+    /*
+    * @notify Change mintAllowed
+    * @param parameter The parameter name
+    * @param data The new value for mintAllowed
+    */
+    function modifyParameters(bytes32 parameter, uint256 data) external isAuthorized {
+        if (parameter == "mintAllowed") {
+          mintAllowed = data;
+        }
+        else revert("ProtocolTokenMinter/modify-unrecognized-param");
+        emit ModifyParameters(parameter, data);
+    }
 
     // --- Core Logic ---
     /*
@@ -109,6 +124,7 @@ contract ProtocolTokenMinter is GebMath {
     */
     function mint() external {
       require(now > mintStartTime, "ProtocolTokenMinter/too-early");
+      require(mintAllowed == 1, "ProtocolTokenMinter/mint-not-allowed");
       require(addition(lastWeeklyMint, WEEK) <= now, "ProtocolTokenMinter/week-not-elapsed");
 
       uint256 weeklyAmount;
