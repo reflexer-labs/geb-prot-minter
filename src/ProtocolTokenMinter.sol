@@ -52,7 +52,7 @@ contract ProtocolTokenMinter is GebMath {
     uint256 public constant WEEK                     = 1 weeks;
     uint256 public constant WEEKS_IN_YEAR            = 52;
     uint256 public constant INITIAL_INFLATION_PERIOD = WEEKS_IN_YEAR * 3; // 3 years
-    uint256 public constant TERMINAL_INFLATION       = 1.05E18;           // 5% compounded weekly
+    uint256 public constant TERMINAL_INFLATION       = 1.02E18;           // 2% compounded weekly
 
     // Address that receives minted tokens
     address     public mintReceiver;
