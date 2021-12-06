@@ -42,6 +42,10 @@ contract DecreasingProtocolTokenMinter is GebMath {
     uint256 public lastWeeklyMint;                                        // timestamp
     // Last week number when the contract accrued inflation
     uint256 public lastTaggedWeek;
+    // Last week number when a new terminal year started
+    uint256 public lastTerminalYearStart;
+    // Token supply recorded at the start of a terminal year
+    uint256 public terminalYearStartTokenAmount;
     // Decay for the weekly amount to mint
     uint256 public weeklyMintDecay;                                       // wad
     // Timestamp when minting starts
@@ -52,7 +56,7 @@ contract DecreasingProtocolTokenMinter is GebMath {
     uint256 public constant WEEK                     = 1 weeks;
     uint256 public constant WEEKS_IN_YEAR            = 52;
     uint256 public constant INITIAL_INFLATION_PERIOD = WEEKS_IN_YEAR * 3; // 3 years
-    uint256 public constant TERMINAL_INFLATION       = 1.02E18;           // 2% compounded weekly
+    uint256 public constant TERMINAL_INFLATION       = 2;                 // 2% compounded weekly
 
     // Address that receives minted tokens
     address     public mintReceiver;
@@ -134,12 +138,16 @@ contract DecreasingProtocolTokenMinter is GebMath {
           weeklyAmount        = amountToMintPerWeek;
           amountToMintPerWeek = multiply(amountToMintPerWeek, weeklyMintDecay) / WAD;
         } else {
-          weeklyAmount = wdivide(protocolToken.totalSupply(), TERMINAL_INFLATION) / WEEKS_IN_YEAR;
+          weeklyAmount = multiply(terminalYearStartTokenAmount, TERMINAL_INFLATION) / 100 / WEEKS_IN_YEAR;
         }
 
         lastTaggedWeek = addition(lastTaggedWeek, 1);
-
         protocolToken.mint(address(this), weeklyAmount);
+
+        if (subtract(lastTaggedWeek, lastTerminalYearStart) >= WEEKS_IN_YEAR) {
+          lastTerminalYearStart        = lastTaggedWeek;
+          terminalYearStartTokenAmount = protocolToken.totalSupply();
+        }
 
         emit Mint(weeklyAmount);
       }

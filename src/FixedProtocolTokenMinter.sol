@@ -8,7 +8,7 @@ abstract contract DSTokenLike {
     function transfer(address, uint256) virtual public;
 }
 
-contract FixedProtocolTokenMinter {
+contract FixedProtocolTokenMinter is GebMath {
     // --- Auth ---
     mapping (address => uint256) public authorizedAccounts;
     /**
@@ -40,6 +40,10 @@ contract FixedProtocolTokenMinter {
     uint256 public initialAmountToMintPerWeek;                            // wad
     // Last timestamp when the contract accrued inflation
     uint256 public lastWeeklyMint;                                        // timestamp
+    // Last week number when a new terminal year started
+    uint256 public lastTerminalYearStart;
+    // Token supply recorded at the start of a terminal year
+    uint256 public terminalYearStartTokenAmount;
     // Last week number when the contract accrued inflation
     uint256 public lastTaggedWeek;
     // Timestamp when initial minting starts
@@ -50,7 +54,7 @@ contract FixedProtocolTokenMinter {
     uint256 public constant WEEK                     = 1 weeks;
     uint256 public constant WEEKS_IN_YEAR            = 52;
     uint256 public constant INITIAL_INFLATION_PERIOD = WEEKS_IN_YEAR * 1; // 1 year
-    uint256 public constant TERMINAL_INFLATION       = 1.02E18;           // 2% compounded weekly
+    uint256 public constant TERMINAL_INFLATION       = 2;                 // 2% compounded weekly
 
     // Address that receives minted tokens during the initial mint period
     address     public initialMintReceiver;
@@ -66,6 +70,7 @@ contract FixedProtocolTokenMinter {
     event Mint(uint256 weeklyAmount);
     event ModifyParameters(bytes32 parameter, address data);
     event ModifyParameters(bytes32 parameter, uint256 data);
+    event SwitchedToTerminal();
 
     constructor(
       address initialMintReceiver_,
@@ -84,9 +89,10 @@ contract FixedProtocolTokenMinter {
         authorizedAccounts[msg.sender] = 1;
 
         initialMintReceiver        = initialMintReceiver_;
+        terminalMintReceiver       = terminalMintReceiver_;
         protocolToken              = DSTokenLike(protocolToken_);
         mintStartTime              = mintStartTime_;
-        initialAmountToMintPerWeek = initialAmountToMintPerWeek;
+        initialAmountToMintPerWeek = initialAmountToMintPerWeek_;
 
         emit AddAuthorization(msg.sender);
     }
@@ -121,8 +127,10 @@ contract FixedProtocolTokenMinter {
     */
     function switchToTerminal() external isAuthorized {
         require(lastTaggedWeek < INITIAL_INFLATION_PERIOD, "FixedProtocolTokenMinter/already-terminal");
-        lastWeeklyMint = now;
-        lastTaggedWeek = INITIAL_INFLATION_PERIOD;
+        lastWeeklyMint               = now;
+        lastTaggedWeek               = INITIAL_INFLATION_PERIOD;
+        lastTerminalYearStart        = INITIAL_INFLATION_PERIOD;
+        terminalYearStartTokenAmount = protocolToken.totalSupply();
         emit SwitchedToTerminal();
     }
 
@@ -141,22 +149,26 @@ contract FixedProtocolTokenMinter {
         if (lastTaggedWeek < INITIAL_INFLATION_PERIOD) {
           weeklyAmount = initialAmountToMintPerWeek;
         } else {
-          weeklyAmount = wdivide(protocolToken.totalSupply(), TERMINAL_INFLATION) / WEEKS_IN_YEAR;
+          weeklyAmount = multiply(terminalYearStartTokenAmount, TERMINAL_INFLATION) / 100 / WEEKS_IN_YEAR;
         }
 
         lastTaggedWeek = addition(lastTaggedWeek, 1);
-
         protocolToken.mint(address(this), weeklyAmount);
 
+        if (subtract(lastTaggedWeek, lastTerminalYearStart) >= WEEKS_IN_YEAR) {
+          lastTerminalYearStart        = lastTaggedWeek;
+          terminalYearStartTokenAmount = protocolToken.totalSupply();
+        }
+
         emit Mint(weeklyAmount);
-      }
+    }
 
     /*
     * @notice Transfer minted tokens
     * @param amount The amount to transfer
     */
     function transferMintedAmount(uint256 amount) external isAuthorized {
-        address tokenReceiver = (lastTaggedWeek >= INITIAL_INFLATION_PERIOD) ? terminalMintReceiver : initialMintReceiver;
+        address tokenReceiver = (lastTaggedWeek > INITIAL_INFLATION_PERIOD) ? terminalMintReceiver : initialMintReceiver;
         protocolToken.transfer(tokenReceiver, amount);
     }
 }
